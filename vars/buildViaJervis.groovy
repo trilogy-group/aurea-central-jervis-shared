@@ -169,7 +169,7 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-   currentBuild.changeSets.each{ changeset -> echo changeset.comment }
+   currentBuild.changeSets.each{ changeset -> changeset.each{ change -> echo change.comment} }
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
