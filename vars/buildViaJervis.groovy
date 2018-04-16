@@ -70,7 +70,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
         throw new FileNotFoundException('Cannot find .jervis.yml nor .travis.yml')
     }
    def jervis_dict = new Yaml().load(jervis_yaml);
-   echo "${jervis_dict}"
+   echo "${jervis_dict.keySet()}"
    if('jervis' in jervis_dict.keySet()){
       def jervis_map = jervis_yaml['jervis']
       echo "${jervis_map}"
