@@ -29,6 +29,7 @@ import jenkins.bouncycastle.api.PEMEncodable
 import jenkins.model.Jenkins
 import static jenkins.bouncycastle.api.PEMEncodable.decode
 
+
 /**
   Gets GitHub API token from the global credential store.
  */
@@ -43,6 +44,7 @@ String getGitHubAPIToken() {
         }
     } as String
 }
+
 
 /**
   Reads GitHub API and returns the .jervis.yml file via API instead of a
@@ -68,6 +70,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     }
     [jervis_yaml, folder_listing]
 }
+
 
 /**
   Gets RSA credentials for a given folder.
@@ -124,6 +127,7 @@ def withEnvSecretWrapper(pipelineGenerator generator, List envList, Closure body
     }
 }
 
+
 /**
   Returns a string which can be printed.  It is the decrypted properties from a
   .jervis.yml file.
@@ -136,6 +140,7 @@ String printDecryptedProperties(lifecycleGenerator generator, String credentials
         '    ' + (generator.plainmap.keySet() as List).join('\n    ')
     ].join('\n') as String
 }
+
 
 /**
   The main method of buildViaJervis()
@@ -156,13 +161,17 @@ def call() {
     String script_header
     String toolchains_json
     List folder_listing = []
-    BRANCH_NAME = BRANCH_NAME?:env.GIT_BRANCH
+    BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
     boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
     env.IS_PR_BUILD = "${is_pull_request}" as String
     currentBuild.rawBuild.parent.parent.sources[0].source.with {
         github_org = it.repoOwner
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
+    }
+    //fix pull request branch name.  Otherwise shows up as PR-* as the branch name.
+    if(is_pull_request) {
+        env.BRANCH_NAME = env.CHANGE_BRANCH
     }
     jenkins_folder = currentBuild.rawBuild.parent.parent.fullName.split('/')[0]
     List jervisEnvList = [
@@ -282,6 +291,7 @@ def call() {
         }
         List publishableItems = pipeline_generator.publishableItems
         if(publishableItems) {
+            //admin defining default settings for publishers they support
             pipeline_generator.collect_settings_defaults = [
                 artifacts: [
                     allowEmptyArchive: false,
@@ -292,15 +302,56 @@ def call() {
                 cobertura: [
                     autoUpdateHealth: false,
                     autoUpdateStability: false,
+                    failNoReports: false,
                     failUnhealthy: false,
                     failUnstable: false,
                     maxNumberOfBuilds: 0,
                     onlyStable: false,
                     sourceEncoding: 'ASCII',
-                    zoomCoverageChart: false
+                    zoomCoverageChart: false,
+                    methodCoverageTargets: '80, 0, 0',
+                    lineCoverageTargets: '80, 0, 0',
+                    conditionalCoverageTargets: '70, 0, 0'
+                ],
+                html: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    includes: '**/*',
+                    keepAll: false,
+                    reportFiles: 'index.html',
+                    reportName: 'HTML Report',
+                    reportTitles: ''
+                ],
+                junit: [
+                    allowEmptyResults: false,
+                    healthScaleFactor: 1.0,
+                    keepLongStdio: false
                 ]
             ]
-            pipeline_generator.collect_settings_filesets = [artifacts: ['excludes']]
+            //admin requiring stashes for HTML publisher to be formed a compatible way.
+            pipeline_generator.stashmap_preprocessor = [
+                html: { Map settings ->
+                    settings['includes']?.tokenize(',').collect {
+                        "${settings['path']  -~ '/$' -~ '^/'}/${it}"
+                    }.join(',').toString()
+                }
+            ]
+            //admin supporting optional list or string for filesets in default settings
+            pipeline_generator.collect_settings_filesets = [artifacts: ['excludes'], html: ['includes']]
+            //admin requiring regex validation of specific jenkins.collect setinggs
+            //if a user fails the input validation it falls back to the default option
+            //if an invalid path is specified for HTML publisher then do not attempt to collect
+            String cobertura_targets_regex = '([0-9]*\\.?[0-9]*,? *){3}[^,]$'
+            pipeline_generator.collect_settings_validation = [
+                cobertura: [
+                    methodCoverageTargets: cobertura_targets_regex,
+                    lineCoverageTargets: cobertura_targets_regex,
+                    conditionalCoverageTargets: cobertura_targets_regex
+                ],
+                html: [
+                    path: '''^[^,\\:*?"'<>|]+$'''
+                ]
+            ]
             stage("Publish results") {
                 for(String name : publishableItems) {
                     unstash name
@@ -316,21 +367,36 @@ def call() {
                                              caseSensitive: item['caseSensitive']
                             break
                         case 'cobertura':
-                            step([
-                                    $class: 'CoberturaPublisher',
+                            cobertura coberturaReportFile: item['path'],
                                     autoUpdateHealth: item['autoUpdateHealth'],
                                     autoUpdateStability: item['autoUpdateStability'],
-                                    coberturaReportFile: item['path'],
+                                    failNoReports: item['failNoReports'],
                                     failUnhealthy: item['failUnhealthy'],
                                     failUnstable: item['failUnstable'],
                                     maxNumberOfBuilds: item['maxNumberOfBuilds'],
                                     onlyStable: item['onlyStable'],
                                     sourceEncoding: item['sourceEncoding'],
-                                    zoomCoverageChart: item['zoomCoverageChart']
-                            ])
+                                    zoomCoverageChart: item['zoomCoverageChart'],
+                                    methodCoverageTargets: item['methodCoverageTargets'],
+                                    lineCoverageTargets: item['lineCoverageTargets'],
+                                    conditionalCoverageTargets: item['conditionalCoverageTargets']
+                            break
+                        case 'html':
+                            publishHTML allowMissing: item['allowMissing'],
+                                        alwaysLinkToLastBuild: item['alwaysLinkToLastBuild'],
+                                        includes: item['includes'],
+                                        keepAll: item['keepAll'],
+                                        reportDir: item['path'],
+                                        reportFiles: item['reportFiles'],
+                                        reportName: item['reportName'],
+                                        reportTitles: item['reportTitles']
                             break
                         case 'junit':
-                            junit item
+                            junit allowEmptyResults: item['allowEmptyResults'],
+                                  healthScaleFactor: item['healthScaleFactor'],
+                                  keepLongStdio: item['keepLongStdio'],
+                                  testResults: item['path']
+
                             break
                     }
                 }

@@ -12,15 +12,45 @@ them.  The following migration path is recommended:
   after disabling them.  Review what was disabled before running
   [delete-freestyle-jobs][fs-migrate-2] Script Console script.
 
+#### New features:
+
+- Admins can now define user input validation (or fall back to a default) on
+  `jenkins.collect` publishers.  For more complicated string input for settings
+  which requires a specific format.  This is to optionally protect users from
+  accidentally defining an incorrect setting and breaking their builds.
+  Validation also works on the default user field which means if a user does not
+  pass validation, then their publisher is simply skipped.
+- Admins can preprocess stashmaps for publishers so that more complex stashing
+  can occur if a plugin for publishing results requires it.
+
 #### Bug fixes:
 
 - Fixes critical bug where users who do not define collecting any artifacts in
   YAML will cause their job to fail to build.
+- Fixes critical bug where admins who define default settings as a fileset and a
+  user does not customize it, causes an invalid value to be set as the default
+  instead of the proper default.
 
-#### Pipeline DSL scripts changes in the `vars` folder:
+#### Job DSL scripts changes in the `jobs/` folder:
+
+- Since pipelines are now fully supported the configuring views for jobs no
+  longer make sense.  Configuring views has been removed.
+- Bugfix branch filters not working.
+- `Jenkinsfile` is no longer referenced in the repository.  It is loaded by
+  Jervis pipeline DSL scripts.  Jenkins jobs now load a default `Jenkinsfile`
+  provided by the plugins [Multibranch: Pipeline with defaults][mpwd] and
+  [Config File Provider][cfp].
+
+[mpwd]: https://plugins.jenkins.io/pipeline-multibranch-defaults
+[cfp]: https://plugins.jenkins.io/config-file-provider
+
+#### Pipeline DSL scripts changes in the `vars/` folder:
 
 - Feature: failed unit tests are now properly exposed.
 - Feature: Cobertura report collection can now be customized for enforcement.
+- Feature: JUnit report collection can now be fully customized.
+- Bugfix: Pull request builds no longer worked after upgrading plugins.  This is
+  now fixed.
 
 # jervis 1.0 - Oct 30th, 2017
 
@@ -97,7 +127,7 @@ scripts.
   script libraries.
 - New `pipelineGenerator` class is available for use in scripts.
 
-#### Pipeline DSL scripts changes in the `vars` folder:
+#### Pipeline DSL scripts changes in the `vars/` folder:
 
 - Added an example pipeline global shared library to `resources/` and `vars/`.
 - New `pipelineGenerator` class is available for use in scripts.
