@@ -210,6 +210,13 @@ class GitHub implements JervisRemote {
         return listing
     }
 
+    public String getCommitMessage(String project, String branch_name) {
+
+        ArrayList listing = []
+        def response = this.fetch("repos/${owner}/${project}/git/commits/${branch_name)")
+        return response
+    }
+
     /**
       Get a human readable string for this type of remote.  This is meant to be a standard function for Jervis to interact with remotes.  All remotes are required to have this function.
 
