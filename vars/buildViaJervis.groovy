@@ -81,8 +81,6 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
          echo "map=${jervis_yamls_map}"
          echo "mapkeys=${jervis_yamls_map.keySet()}"
    }
-   String commit_msg = git_service.getCommitMessage(project, JERVIS_BRANCH)
-   echo "commit_msg=${commit_msg}" 
     [jervis_yaml, folder_listing, jervis_yamls_map]
 }
 
@@ -171,6 +169,9 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
+   
+   String commit_msg = git_service.fetch("repos/${github_org}/${github_repo}/git/commits/${BRANCH_NAME)")
+   echo "commit_msg=${commit_msg}" 
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
