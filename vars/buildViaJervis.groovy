@@ -169,7 +169,8 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-   
+    def git_service = new GitHub()
+    git_service.gh_token = getGitHubAPIToken()
    String commit_msg = git_service.fetch("repos/${github_org}/${github_repo}/git/commits/${BRANCH_NAME}")
    echo "commit_msg=${commit_msg}" 
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
