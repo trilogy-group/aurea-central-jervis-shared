@@ -169,7 +169,8 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-    echo "currentBuild.keySet=${currentBuild.keySet()}" 
+    String jenkins_folder = currentBuild.rawBuild.parent.parent.fullName.split('/')[0]
+    echo Jenkins.instance.getItem(jenkins_folder).getBuildByNumber(env.BUILD_NUMBER).getChangeSet()
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
