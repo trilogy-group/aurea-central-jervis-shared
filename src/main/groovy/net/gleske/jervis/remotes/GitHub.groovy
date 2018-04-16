@@ -212,9 +212,8 @@ class GitHub implements JervisRemote {
 
     public String getCommitMessage(String project, String branch_name) {
 
-        ArrayList listing = []
         def response = this.fetch("repos/${owner}/${project}/git/commits/${branch_name)")
-        return response
+       return "${response}"
     }
 
     /**
