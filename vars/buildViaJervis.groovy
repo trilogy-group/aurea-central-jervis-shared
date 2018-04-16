@@ -205,15 +205,7 @@ def call() {
              && 
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
-              jervis_tasks[component_name] = {
-                 
-                 node('master') {
-                 
-                    stage("Forking to component ${component_name}") 
-                    {
-                        buildViaJervis(jervis_yamls[component_name],folder_listing)
-                    }
-                 }
+               buildViaJervis(jervis_yamls[component_name],folder_listing)
               }
             }
      }
