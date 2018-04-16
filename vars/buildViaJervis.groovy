@@ -73,7 +73,8 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
    echo "${jervis_dict.keySet()}"
    if('jervis' in jervis_dict.keySet()){
       def jervis_map = jervis_dict['jervis']
-      echo "${jervis_map}"
+      for(String component_name : jervis_map.keySet()) {
+      echo "${component_name}: ${jervis_map[component_name]}"
    }
     [jervis_yaml, folder_listing]
 }
