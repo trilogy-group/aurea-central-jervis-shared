@@ -208,10 +208,6 @@ def call() {
               jervis_tasks[component_name] = {
                  
                  node('jervis_generator') {
-                    stage("Checkout SCM") {
-                        checkout 
-                    }
-
                  
                     stage("Forking to component ${component_name}") 
                     {
