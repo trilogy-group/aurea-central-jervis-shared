@@ -198,17 +198,23 @@ def call() {
     folder_listing = jervis_metadata[1]
     Map jervis_tasks = [failFast: true]
     echo "in proccess map=${jervis_yamls}"
-    for(String component_name : jervis_yamls.keySet()) {
-       if ((componentOnly.empty || component_name in componentOnly)
-           && (componentExcept.empty || ! component_name in componentExcept) ) {
-              jervis_tasks[component_name] = {
-                 stage("Forking to ${component_name}") {
+    for(String component_name : jervis_yamls.keySet()) 
+    {
+       if (
+            (componentOnly.empty || componentOnly.contains(component_name))
+             && 
+            (componentExcept.empty || !componentExcept.contains(component_name)) 
+          ) {
+              jervis_tasks[component_name] = 
+              {
+                 stage("Forking to component ${component_name}") 
+                 {
                      buildViaJervis(jervis_yamls[component_name],folder_listing)
-                   }
+                 }
+              }
             }
-        }
-    }
-   parallel(jervis_tasks)
+     }
+     parallel(jervis_tasks)
 }
 
 /**
