@@ -206,6 +206,7 @@ def call() {
         List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
         jervis_yaml = jervis_metadata[0]
         folder_listing = jervis_metadata[1]
+        echo "jervis_metadata=${jervis_metadata}"
         jervis_yamls = jervis_metadata[3]
         Map jervis_tasks = [failFast: true]
         echo "in proccess map=${jervis_yamls}"
