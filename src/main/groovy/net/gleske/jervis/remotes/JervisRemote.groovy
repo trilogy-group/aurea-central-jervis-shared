@@ -88,6 +88,9 @@ interface JervisRemote {
       @return A list of files in the requested file path.
      */
     ArrayList getFolderListing(String project, String dir_path, String ref);
+   
+   
+    String getFolderListing(String project, String branch_name);
 
     /**
       This method is used by Jervis to output friendly messages including the remote.
