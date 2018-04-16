@@ -68,6 +68,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     else {
         throw new FileNotFoundException('Cannot find .jervis.yml nor .travis.yml')
     }
+    echo "${jervis_yaml}"
     [jervis_yaml, folder_listing]
 }
 
