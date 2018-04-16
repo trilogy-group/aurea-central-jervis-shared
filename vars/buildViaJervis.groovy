@@ -79,7 +79,8 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
          def new_jervis_yaml = git_service.getFile(project, jervis_yamls_map[component_name], JERVIS_BRANCH)
          jervis_yamls_map[component_name]=new_jervis_yaml
       }
-         echo "${jervis_yamls_map}"
+         echo "map=${jervis_yamls_map}"
+         echo "mapkeys=${jervis_yamls_map.keySet()}"
    }
     [jervis_yaml, folder_listing, jervis_yamls_map]
 }
@@ -207,6 +208,7 @@ def call() {
         folder_listing = jervis_metadata[1]
         jervis_yamls = jervis_metadata[3]
         Map jervis_tasks = [failFast: true]
+        echo "in proccess map=${jervis_yamls}"
         for(String component_name : jervis_yamls.keySet()) {
            jervis_tasks[component_name] = {
                     stage("Checkout SCM") {
