@@ -12,10 +12,24 @@ them.  The following migration path is recommended:
   after disabling them.  Review what was disabled before running
   [delete-freestyle-jobs][fs-migrate-2] Script Console script.
 
+#### New features:
+
+- Admins can now define user input validation (or fall back to a default) on
+  `jenkins.collect` publishers.  For more complicated string input for settings
+  which requires a specific format.  This is to optionally protect users from
+  accidentally defining an incorrect setting and breaking their builds.
+  Validation also works on the default user field which means if a user does not
+  pass validation, then their publisher is simply skipped.
+- Admins can preprocess stashmaps for publishers so that more complex stashing
+  can occur if a plugin for publishing results requires it.
+
 #### Bug fixes:
 
 - Fixes critical bug where users who do not define collecting any artifacts in
   YAML will cause their job to fail to build.
+- Fixes critical bug where admins who define default settings as a fileset and a
+  user does not customize it, causes an invalid value to be set as the default
+  instead of the proper default.
 
 #### Job DSL scripts changes in the `jobs/` folder:
 

@@ -15,6 +15,7 @@
    */
 package net.gleske.jervis.lang
 
+import java.util.regex.Pattern
 import net.gleske.jervis.exceptions.PipelineGeneratorException
 import static net.gleske.jervis.lang.lifecycleGenerator.getObjectValue
 
@@ -98,11 +99,82 @@ class pipelineGenerator implements Serializable {
     Map collect_settings_defaults = [:]
 
     /**
+      This is a <tt>Map</tt> of validation for settings defined in the YAML key
+      <tt>jenkins.collect</tt>.  Sometimes, when specifying plugins validation
+      of values is required.  Validation of values can take the form of a list
+      of acceptable regex patterns or a single regex pattern to validate what
+      the user defined.  Some settings, an admin may desire, to limit user
+      input if it's a String value.  Validation can only be defined for
+      Strings.
+     */
+    Map collect_settings_validation = [:]
+
+    /**
       Some settings defined in <tt>{@link #collect_settings_defaults}</tt> support
       <a href="http://ant.apache.org/manual/Types/fileset.html" target=_blank>Ant filesets</a>
       and this <tt>Map</tt> adds support for those settings.
      */
     Map collect_settings_filesets = [:]
+
+    /**
+      Customize the processing of stashmaps for stash names.  A stashmap
+      preprocessor can be used to customize how stashing is calculated for
+      custom publishers.  For example, this is necessary for publishers.  All
+      keys must be a String.  All values must be a Closure which takes a single
+      argument that is a Map.  The following is an example.
+
+      <pre><tt>import net.gleske.jervis.lang.lifecycleGenerator
+import net.gleske.jervis.lang.pipelineGenerator
+
+String yaml = '''
+language: groovy
+jenkins:
+  collect:
+    html: build/docs/groovydoc
+'''.trim()
+
+def generator = new lifecycleGenerator()
+generator.loadLifecyclesString(new File('resources/lifecycles-ubuntu1604-stable.json').text)
+generator.loadToolchainsString(new File('resources/toolchains-ubuntu1604-stable.json').text)
+
+generator.loadYamlString(yaml)
+def pipeline_generator = new pipelineGenerator(generator)
+pipeline_generator.supported_collections = ['html']
+pipeline_generator.collect_settings_filesets = [html: ['includes']]
+pipeline_generator.collect_settings_defaults = [html: [includes: 'foo']]
+pipeline_generator.collect_settings_validation = [html: [path: '''^[^,\\:*?"'<>|]+$''']]
+pipeline_generator.stashmap_preprocessor = [
+    html: { Map settings ->
+      settings['includes']?.tokenize(',').collect {
+           "${settings['path']  -~ '/$' -~ '^/'}/${it}"
+        }.join(',').toString()
+    }
+]
+
+//should return "build/docs/groovydoc/foo"
+pipeline_generator.stashMap['html']['includes']</tt></pre>
+     */
+    Map stashmap_preprocessor = [:]
+
+    /**
+      This filter ensures an admin only sets proper closures for the
+      <tt>{@link #stashmap_processor}</tt>.  A <tt>stashmap_processor</tt> is
+      for <tt>jenkins.collect</tt> items in user YAML.  Sometimes a publisher
+      needs to customize how it stashes files.  This preprocessor allows an
+      admin how a
+      <a href="https://jenkins.io/doc/pipeline/steps/workflow-basic-steps/#code-stash-code-stash-some-files-to-be-used-later-in-the-build">stash "includes" file pattern</a>
+      is determined from the settings of an item.
+     */
+    void setStashmap_preprocessor(Map m) {
+        //Stashmap processors are required to take only a single argument and return a String
+        stashmap_preprocessor = m.findAll { k, v ->
+            (k in String) &&
+            (v in Closure) &&
+            v.maximumNumberOfParameters == 1 &&
+            (Map in v.parameterTypes)
+        }
+    }
+
 
     /**
       This holds the user defined jenkins.collect item maps so we don't have to reference them.
@@ -169,6 +241,20 @@ class pipelineGenerator implements Serializable {
             //append the items to collect to the end of the list of stashes (overrides prior entries)
             this.stashes += this.collect_items.collect { k, v ->
                 [name: k, includes: v]
+                /*
+                if((k in stashmap_preprocessor) && (getPublishable(k) in Map)) {
+                    if(!(value in String)) {
+                        throw new PipelineGeneratorException("stashmap_preprocessor for collect item '${k}' must return a String but does not.  This issue can only be resolved by an admin of the pipeline shared library.")
+                    }
+                    println "value is ${value}"
+                    return [
+                        name: k,
+                        includes: value,
+                    ]
+                }
+                else {
+                    return [name: k, includes: v]
+                }*/
             }
         }
     }
@@ -230,8 +316,23 @@ class pipelineGenerator implements Serializable {
                     getObjectValue(s, 'includes', '') &&
                     (!isMatrix || getObjectValue(s, 'matrix_axis', [:])) &&
                     (!isMatrix || (getObjectValue(s, 'matrix_axis', [:]) == convertMatrixAxis(matrix_axis)))) {
-                stash_map[getObjectValue(s, 'name', '')] = [
-                    'includes': getObjectValue(s, 'includes', ''),
+                    String name = getObjectValue(s, 'name', '')
+                    String includes = getObjectValue(s, 'includes', '')
+                    if((name in stashmap_preprocessor) && (getPublishable(name) in Map)) {
+                        def result
+                        try {
+                            result = stashmap_preprocessor[name](getPublishable(name))
+                        }
+                        catch(Exception e) {
+                            throw new PipelineGeneratorException("stashmap_preprocessor for collect item '${name}' must return a String but does not.  This issue can only be resolved by an admin of the pipeline shared library.\nSTART Preprocessor Exception:\n${e.toString()}\n    ${e.getStackTrace()*.toString().join('\n    ')}\n\nEND Preprocessor Exception")
+                        }
+                        if(!(result in String)) {
+                            throw new PipelineGeneratorException("stashmap_preprocessor for collect item '${name}' must return a String but does not.  This issue can only be resolved by an admin of the pipeline shared library.")
+                        }
+                        includes = result
+                    }
+                stash_map[name] = [
+                    'includes': includes,
                     'excludes': getObjectValue(s, 'excludes', ''),
                     'use_default_excludes': getObjectValue(s, 'use_default_excludes', true),
                     'allow_empty': getObjectValue(s, 'allow_empty', false),
@@ -294,6 +395,39 @@ class pipelineGenerator implements Serializable {
             throw new PipelineGeneratorException('Calling getPublishableItems() without setting supported_collections.  This issue can only be resolved by an admin of the pipeline shared library.')
         }
         (supported_collections.intersect(known_items) as List).sort()
+        //(supported_collections.intersect(known_items) as List).findAll { getPubishable(it) as Boolean }.sort()
+    }
+
+    /**
+      Check to see if user input is valid when a customized collction is defined.
+
+      @param item The "jenkins &gt; collect" YAML key to check; e.g.
+                  <tt>artifact</tt>.
+      @param setting The setting of the collected item to validate against.
+      @param input   User input defined by an end user in their Jervis YAML.
+      @return        Returns <tt>true</tt> if an admin hasn't defined any
+                     validation.  Returns <tt>true</tt> if an admin defined a
+                     validation method and the user passed validation.  Returns
+                     <tt>false</tt> if the admin defined input validation and
+                     the user input failed to pass it.
+      */
+    private boolean isCollectUserInputValid(String item, String setting, def input) {
+        if((item in collect_settings_validation) && (setting in collect_settings_validation[item])) {
+            def validator = collect_settings_validation[item][setting]
+            if((!(validator in  String) && !(validator in List)) ||
+                    ((validator in List) && (false in validator.collect { it in String }))) {
+                throw new PipelineGeneratorException("Global shared pipeline library Admin did not properly define collect_settings_validation for key ${item}.${setting}.  It must be a String or List of Strings.  This is an invalid configuration in the global shared pipeline library in collect_settings_validation.")
+            }
+            if(!(input in String)) {
+                throw new PipelineGeneratorException("Global pipeline library Admin has not properly matched validation for key ${item}.${setting}.  Admin is attempting to validate a type that isn't a String.  This is an invalid configuration in the global shared pipeline library in collect_settings_validation.")
+            }
+            //Admin has properly defined settings so let's proceed with validating the value provided by the user.
+            String regex = (validator in List)? validator.join('|') : validator
+            Pattern.compile(regex).matcher(input).matches()
+        }
+        else {
+            true
+        }
     }
 
     /**
@@ -312,15 +446,21 @@ class pipelineGenerator implements Serializable {
             Map tmp = collect_settings_defaults[item].collect { k, v ->
                 def setting = getObjectValue((user_defined_collect_settings[item])?: [:], k, v)
                 if(item in collect_settings_filesets && k in collect_settings_filesets[item]) {
-                    setting = processCollectValue(getObjectValue((user_defined_collect_settings[item])?: [:], k, new Object()), k)
+                    if(k in (user_defined_collect_settings[item]?: [:])) {
+                        setting = processCollectValue(getObjectValue((user_defined_collect_settings[item])?: [:], k, new Object()), k)
+                    }
                     if(!setting) {
                         setting = v
                     }
                 }
+                //check if user input matches admin required format (if any)
+                if(!isCollectUserInputValid(item, k, setting)) {
+                    setting = v
+                }
                 [(k): setting]
             }.sum()
             tmp << ['path': path]
-            return tmp
+            return isCollectUserInputValid(item, 'path', path)? tmp : [:]
         }
         else {
             return path
