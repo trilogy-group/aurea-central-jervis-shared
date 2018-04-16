@@ -227,7 +227,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing) {
     stage('Process Jervis YAML') {
         platforms_json = libraryResource 'platforms.json'
         generator.loadPlatformsString(platforms_json)
-        echo "jervis_metadata=${jervis_metadata}"
         generator.preloadYamlString(jervis_yaml)
         os_stability = "${generator.label_os}-${generator.label_stability}"
         lifecycles_json = libraryResource "lifecycles-${os_stability}.json"
