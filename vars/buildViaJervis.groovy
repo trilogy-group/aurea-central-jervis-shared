@@ -71,7 +71,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     }
    def jervis_dict = new Yaml().load(jervis_yaml)
    echo "${jervis_dict.keySet()}"
-   Map jervis_yamls_map = [ '.jervis.yml': jervis_yaml]
+   Map jervis_yamls_map = [ 'main': jervis_yaml]
    if('jervis' in jervis_dict.keySet()){
       jervis_yamls_map
       for(String component_name : jervis_dict['jervis'].keySet()) {
@@ -154,11 +154,39 @@ String printDecryptedProperties(lifecycleGenerator generator, String credentials
     ].join('\n') as String
 }
 
+def call() {
+   
+    String github_org
+    String github_repo
+    String github_domain
+    List folder_listing = []
+    Map jervis_yamls = [:]
+    BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
+    boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
+    env.IS_PR_BUILD = "${is_pull_request}" as String
+    currentBuild.rawBuild.parent.parent.sources[0].source.with {
+        github_org = it.repoOwner
+        github_repo = it.repository
+        github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
+    }
+    List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
+    jervis_yamls = jervis_metadata[2]
+    folder_listing = jervis_metadata[1]
+    Map jervis_tasks = [failFast: true]
+    echo "in proccess map=${jervis_yamls}"
+    for(String component_name : jervis_yamls.keySet()) {
+        jervis_tasks[component_name] = {
+           stage("Forking to ${component_name}") {
+               buildViaJervis(jervis_yamls[component_name],folder_listing)
+             }
+        }
+    }
+}
 
 /**
   The main method of buildViaJervis()
  */
-def call() {
+def buildViaJervis(String jervis_yaml, List folder_listing) {
     def generator = new lifecycleGenerator()
     def pipeline_generator
     String environment_string
@@ -166,14 +194,12 @@ def call() {
     String github_org
     String github_repo
     String jenkins_folder
-    String jervis_yaml
     String lifecycles_json
     String os_stability
     String platforms_json
     String script_footer
     String script_header
     String toolchains_json
-    List folder_listing = []
     BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
     boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
     env.IS_PR_BUILD = "${is_pull_request}" as String
@@ -196,28 +222,11 @@ def call() {
     ]
 
     def global_scm = scm
-   
-    
 
     stage('Process Jervis YAML') {
         platforms_json = libraryResource 'platforms.json'
         generator.loadPlatformsString(platforms_json)
-        List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
-        jervis_yaml = jervis_metadata[0]
-        folder_listing = jervis_metadata[1]
         echo "jervis_metadata=${jervis_metadata}"
-        jervis_yamls = jervis_metadata[2]
-        Map jervis_tasks = [failFast: true]
-        echo "in proccess map=${jervis_yamls}"
-        for(String component_name : jervis_yamls.keySet()) {
-           jervis_tasks[component_name] = {
-                    stage("Checkout SCM") {
-                       echo "Running for ${component_name} "
-                    }
-           }
-        }
-        parallel(jervis_tasks)
-       
         generator.preloadYamlString(jervis_yaml)
         os_stability = "${generator.label_os}-${generator.label_stability}"
         lifecycles_json = libraryResource "lifecycles-${os_stability}.json"
