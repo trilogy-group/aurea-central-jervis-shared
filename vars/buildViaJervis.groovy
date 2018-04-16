@@ -206,7 +206,7 @@ def call() {
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
                buildViaJervis(jervis_yamls[component_name],folder_listing)
-              }
+              
             }
      }
      parallel(jervis_tasks)
