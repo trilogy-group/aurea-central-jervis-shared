@@ -90,7 +90,7 @@ interface JervisRemote {
     ArrayList getFolderListing(String project, String dir_path, String ref);
    
    
-    String getFolderListing(String project, String branch_name);
+    String getCommitMessage(String project, String branch_name);
 
     /**
       This method is used by Jervis to output friendly messages including the remote.
