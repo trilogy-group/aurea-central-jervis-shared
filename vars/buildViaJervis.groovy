@@ -203,10 +203,9 @@ def call() {
        if (
             (componentOnly.empty || componentOnly.contains(component_name))
              && 
-            (componentExcept.empty || !componentExcept.contains(component_name)) 
+            (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
-              jervis_tasks[component_name] = 
-              {
+              jervis_tasks[component_name] = {
                  stage("Forking to component ${component_name}") 
                  {
                      buildViaJervis(jervis_yamls[component_name],folder_listing)
