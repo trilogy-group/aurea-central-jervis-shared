@@ -191,7 +191,7 @@ def call() {
                    }
             }
          }
-      } 
+       
    
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
