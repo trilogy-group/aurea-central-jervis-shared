@@ -169,10 +169,7 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-    def git_service = new GitHub()
-    git_service.gh_token = getGitHubAPIToken()
-    def commit_msg = new Yaml().load(new URL("http://localhost:8080/job/trilogy-group/job/aurea-central-jervis-example/job/PR-5/59/api/json?pretty=true").newReader(requestProperties: ['Accept': 'application/json']))
-    echo "commit_msg=${commit_msg}" 
+    echo "currentBuild=${currentBuild}" 
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
