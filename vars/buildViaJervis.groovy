@@ -209,7 +209,7 @@ def call() {
                  
                  node('jervis_generator') {
                     stage("Checkout SCM") {
-                        checkout global_scm
+                        checkout 
                     }
 
                  
