@@ -69,20 +69,22 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     else {
         throw new FileNotFoundException('Cannot find .jervis.yml nor .travis.yml')
     }
-   def jervis_dict = new Yaml().load(jervis_yaml);
+   def jervis_dict = new Yaml().load(jervis_yaml)
    echo "${jervis_dict.keySet()}"
    List jervis_yamls = [jervis_yaml]
+   Map jervis_yamls_map
    if('jervis' in jervis_dict.keySet()){
-      def jervis_map = jervis_dict['jervis']
+      jervis_yamls_map = jervis_dict['jervis']
       for(String component_name : jervis_map.keySet()) {
          echo "${component_name}: ${jervis_map[component_name]}"
          def new_jervis_yaml = git_service.getFile(project, jervis_map[component_name], JERVIS_BRANCH)
          echo "${new_jervis_yaml}"
          jervis_yamls += new_jervis_yaml
+         jervis_yamls_map[component_name]=new_jervis_yaml
       }
          echo "${jervis_yamls}"
    }
-    [jervis_yaml, folder_listing]
+    [jervis_yaml, folder_listing, jervis_yamls_map]
 }
 
 
@@ -197,6 +199,8 @@ def call() {
     ]
 
     def global_scm = scm
+   
+    
 
     stage('Process Jervis YAML') {
         platforms_json = libraryResource 'platforms.json'
@@ -204,6 +208,7 @@ def call() {
         List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
         jervis_yaml = jervis_metadata[0]
         folder_listing = jervis_metadata[1]
+        jervis_yamls = jervis_metadata[3]
         generator.preloadYamlString(jervis_yaml)
         os_stability = "${generator.label_os}-${generator.label_stability}"
         lifecycles_json = libraryResource "lifecycles-${os_stability}.json"
