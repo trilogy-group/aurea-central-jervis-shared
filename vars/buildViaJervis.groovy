@@ -71,13 +71,11 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     }
    def jervis_dict = new Yaml().load(jervis_yaml)
    echo "${jervis_dict.keySet()}"
-   Map jervis_yamls_map = ['main': jervis_yaml]
+   Map jervis_yamls_map = [ 'jervis.yml': jervis_yaml]
    if('jervis' in jervis_dict.keySet()){
-      def temp_map = jervis_dict['jervis']
-      for(String component_name : temp_map.keySet()) {
-         echo "${component_name}: ${temp_map[component_name]}"
-         def new_jervis_yaml = git_service.getFile(project, temp_map[component_name], JERVIS_BRANCH)
-         jervis_yamls_map[component_name]=new_jervis_yaml
+      for(String component_name : jervis_dict['jervis']) {
+         echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
+         jervis_dict['jervis'][component_name = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
       }
          echo "map=${jervis_yamls_map}"
          echo "mapkeys=${jervis_yamls_map.keySet()}"
