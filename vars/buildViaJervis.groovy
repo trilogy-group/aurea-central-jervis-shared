@@ -73,6 +73,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
    echo "${jervis_dict.keySet()}"
    Map jervis_yamls_map = [ '.jervis.yml': jervis_yaml]
    if('jervis' in jervis_dict.keySet()){
+      jervis_yamls_map
       for(String component_name : jervis_dict['jervis'].keySet()) {
          echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
          jervis_yamls_map[component_name] = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
@@ -205,7 +206,7 @@ def call() {
         jervis_yaml = jervis_metadata[0]
         folder_listing = jervis_metadata[1]
         echo "jervis_metadata=${jervis_metadata}"
-        jervis_yamls = jervis_metadata[3]
+        jervis_yamls = jervis_metadata[2]
         Map jervis_tasks = [failFast: true]
         echo "in proccess map=${jervis_yamls}"
         for(String component_name : jervis_yamls.keySet()) {
