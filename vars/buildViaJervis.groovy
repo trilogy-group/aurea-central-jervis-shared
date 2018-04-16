@@ -209,6 +209,16 @@ def call() {
         jervis_yaml = jervis_metadata[0]
         folder_listing = jervis_metadata[1]
         jervis_yamls = jervis_metadata[3]
+        Map jervis_tasks = [failFast: true]
+        for(String component_name : jervis_yamls.keySet()) {
+           jervis_tasks[component_name] = {
+                    stage("Checkout SCM") {
+                       echo "Running for ${component_name} "
+                    }
+           }
+        }
+        parallel(jervis_tasks)
+       
         generator.preloadYamlString(jervis_yaml)
         os_stability = "${generator.label_os}-${generator.label_stability}"
         lifecycles_json = libraryResource "lifecycles-${os_stability}.json"
