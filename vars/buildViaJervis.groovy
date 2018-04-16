@@ -207,7 +207,7 @@ def call() {
           ) {
               jervis_tasks[component_name] = {
                  
-                 node(label) {
+                 node('jervis_generator') {
                     stage("Checkout SCM") {
                         checkout global_scm
                     }
