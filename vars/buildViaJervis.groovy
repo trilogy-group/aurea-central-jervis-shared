@@ -181,6 +181,7 @@ def call() {
              }
         }
     }
+   parallel(jervis_tasks)
 }
 
 /**
