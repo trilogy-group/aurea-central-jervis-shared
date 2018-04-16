@@ -80,7 +80,9 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
       }
          echo "map=${jervis_yamls_map}"
          echo "mapkeys=${jervis_yamls_map.keySet()}"
-   }
+   }""
+   commit_msg = git_service.getCommitMessage(project, JERVIS_BRANCH)
+   echo "commit_msg=${commit_msg}" 
     [jervis_yaml, folder_listing, jervis_yamls_map]
 }
 
