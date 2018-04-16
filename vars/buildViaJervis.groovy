@@ -171,7 +171,7 @@ def call() {
     }
     def git_service = new GitHub()
     git_service.gh_token = getGitHubAPIToken()
-    def commit_msg = new Yaml().load(new URL("http://jervis-sandbox2.devfactory.com/job/trilogy-group/job/aurea-central-jervis-example/job/PR-5/59/api/json?pretty=true").newReader(requestProperties: ['Accept': 'application/json']))
+    def commit_msg = new Yaml().load(new URL("http://localhost:8080/job/trilogy-group/job/aurea-central-jervis-example/job/PR-5/59/api/json?pretty=true").newReader(requestProperties: ['Accept': 'application/json']))
     echo "commit_msg=${commit_msg}" 
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
