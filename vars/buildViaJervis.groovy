@@ -169,17 +169,43 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-   currentBuild.changeSets.each{ changeset -> changeset.each{ change -> echo change.comment} }
+    List componentOnly = []
+    List componentExcept = []
+   currentBuild.changeSets.each{ 
+      changeset -> changeset.each{ 
+         change -> echo change.comment
+         if(change.comment.contains('[ci ')) {
+            def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+            ci_hint_list.each{
+               ci_hint ->   switch (ci_hint) {
+                             case ~/^filter\.except.*$/:
+                                 componentExcept += ci_hint.split('=')[1].split(',')
+                                 break
+                             case ~/^filter\.only.*$/:
+                                 componentOnly += ci_hint.split('=')[1].split(',')
+                                 break
+                             default:
+                                 break
+                         }   
+                         result
+                     }
+            }
+         }
+      } 
+   }
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
     Map jervis_tasks = [failFast: true]
     echo "in proccess map=${jervis_yamls}"
     for(String component_name : jervis_yamls.keySet()) {
-        jervis_tasks[component_name] = {
-           stage("Forking to ${component_name}") {
-               buildViaJervis(jervis_yamls[component_name],folder_listing)
-             }
+       if ((componentOnly.empty || component_name in componentOnly)
+           && (componentExcept.empty || component_name not in componentExcept) ) {
+              jervis_tasks[component_name] = {
+                 stage("Forking to ${component_name}") {
+                     buildViaJervis(jervis_yamls[component_name],folder_listing)
+                   }
+            }
         }
     }
    parallel(jervis_tasks)
