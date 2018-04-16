@@ -207,7 +207,7 @@ def call() {
           ) {
               jervis_tasks[component_name] = {
                  
-                 node(component_name) {
+                 node('master') {
                  
                     stage("Forking to component ${component_name}") 
                     {
