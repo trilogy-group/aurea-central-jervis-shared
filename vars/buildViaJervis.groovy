@@ -171,8 +171,8 @@ def call() {
     }
     def git_service = new GitHub()
     git_service.gh_token = getGitHubAPIToken()
-   String commit_msg = git_service.fetch("repos/${github_org}/${github_repo}/commits")
-   echo "commit_msg=${commit_msg}" 
+    def commit_msg = git_service.fetch("repos/${github_org}/${github_repo}/commits")
+    echo "commit_msg=${commit_msg}" 
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
