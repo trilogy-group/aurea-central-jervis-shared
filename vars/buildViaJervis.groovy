@@ -346,18 +346,26 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                      switch (ci_hint) {
                                    case ~/^filter\.except.*$/:
                                        componentExcept += ci_hint.split('=')[1].split(',')
-                        echo "componentExcept=${componentExcept}"
+                                   echo "componentExcept=${componentExcept}"
                                        break
                                    case ~/^filter\.only.*$/:
                                        componentOnly += ci_hint.split('=')[1].split(',')
-                        echo "componentOnly=${componentOnly}"
+                                   echo "componentOnly=${componentOnly}"
                                        break
                                    default:
                                        break
-                                   }   
+                                      }   
                                }
                          }
                   }
+                  if (component_name in componentExcept ||
+                      (component_name not in componentOnly && ! componentOnly.empty) ) {
+                     echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
+                     currentBuild.result = Result.SUCCESS
+                     currentBuild.completeBuild = false
+                     return
+                  }
+
 
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
