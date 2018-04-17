@@ -175,7 +175,17 @@ def call() {
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
     Map jervis_tasks = [failFast: true]
-    for(String component_name : jervis_yamls.keySet()) 
+    jervis_yamls.keySet().each{
+       component_name -> jervis_tasks[component_name] = { 
+                  node('jervis_generator'){
+                     stage("Forking pipeline for component") {
+                        buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+                  }
+              }
+         }
+         echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + component_name + ":" +jervis_tasks[component_name].dump()
+    }
+    /*for(String component_name : jervis_yamls.keySet()) 
     {
        jervis_tasks[component_name] = { 
               node('jervis_generator'){
@@ -185,7 +195,7 @@ def call() {
               }
          }
          echo component_name + ":" +jervis_tasks[component_name].dump()
-      }
+      }*/
       parallel(jervis_tasks)
 }
 
