@@ -332,13 +332,13 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
     }
 
     node(generator.labels) {
+         List componentOnly = []
+         List componentExcept = []
         if(!generator.isMatrixBuild()) {
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
                echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>=${currentBuild.changeSets.last()}"
-               List componentOnly = []
-               List componentExcept = []
                if(currentBuild.changeSets.last().contains('[ci ')) {
                   def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
                   for (ci_hint in ci_hint_list){
