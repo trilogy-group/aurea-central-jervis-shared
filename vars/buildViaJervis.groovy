@@ -338,13 +338,14 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-               global_scm.dump()
+               echo global_scm.dump()
                echo "Scanning changelog for ci hints"
                currentBuild.changeSets.each{ 
                   changeset -> changeset.each{ 
-                     change -> echo change.comment
+                     change -> echo change.dump()
                      if(change.comment.contains('[ci ')) {
                         def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+                        echo ci_hint_list.dump()
                         for (ci_hint in ci_hint_list){
                            switch (ci_hint) {
                                          case ~/^filter\.except.*$/:
@@ -360,33 +361,15 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                                }
                         }
                      }
-               /*if(currentBuild.changeSets.last().getItems() && currentBuild.changeSets.last().getItems().last().comment.contains('[ci ')) {
-                  echo "Parsing change logs looking for ci hints"
-                  echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>" + currentBuild.changeSets.last().getItems().dump()
-                  def ci_hint_list = currentBuild.changeSets.getItems().last().comment.split('[ci ')[1].split(']')[0].split(' ')
-                  for (ci_hint in ci_hint_list){
-                     echo "ci_hint=${ci_hint}"
-                     switch (ci_hint) {
-                                   case ~/^filter\.except.*$/:
-                                       componentExcept += ci_hint.split('=')[1].split(',')
-                                   echo "componentExcept=${componentExcept}"
-                                       break
-                                   case ~/^filter\.only.*$/:
-                                       componentOnly += ci_hint.split('=')[1].split(',')
-                                   echo "componentOnly=${componentOnly}"
-                                       break
-                                   default:
-                                       break
-                                      }   
-                               }
-                         }
-                  }*/
                   if (component_name in componentExcept ||
                       (component_name in componentOnly && componentOnly.empty) ) {
                      echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                      currentBuild.result = Result.SUCCESS
                      currentBuild.completeBuild = false
                      return
+                  }
+                  else{
+                     echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
                   }
             }
 
