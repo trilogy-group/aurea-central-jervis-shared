@@ -210,18 +210,17 @@ def call() {
                    // when this method is called, not when we pass it to parallel.
                    // To do this, you need to wrap the code below in { }, and either return
                    // that explicitly, or use { -> } syntax.
-                   return {
-                       node('jervis_generator'){
+                   return 
+                   {
+                       node('jervis_generator')
+                       {
                            buildViaJervis(jervis_yamls[component_name],folder_listing)
                        }
                    }
                }
-       }
-
-            }
+             }
       }
       parallel(jervis_tasks)
-  }
 }
 
 /**
