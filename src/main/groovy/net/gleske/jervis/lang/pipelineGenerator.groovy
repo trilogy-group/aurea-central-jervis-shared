@@ -357,9 +357,7 @@ class pipelineGenerator implements Serializable {
             Map tmp = collect_settings_defaults[item].collect { k, v ->
                 def setting = getObjectValue((user_defined_collect_settings[item])?: [:], k, v)
                 if(item in collect_settings_filesets && k in collect_settings_filesets[item]) {
-                    if(k in (user_defined_collect_settings[item]?: [:])) {
-                        setting = processCollectValue(getObjectValue((user_defined_collect_settings[item])?: [:], k, new Object()), k)
-                    }
+                    setting = processCollectValue(getObjectValue((user_defined_collect_settings[item])?: [:], k, new Object()), k)
                     if(!setting) {
                         setting = v
                     }
