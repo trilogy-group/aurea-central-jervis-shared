@@ -366,9 +366,12 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                         }
                      }
                
-                   echo "Testing ${component_name} against hint only=${componentOnly.dump()} and except${componentExcept.dump()}"
+                   echo "Testing ${component_name} against hint only=" + componentOnly.dump() + " and except="+componentExcept.dump()
+                   echo "Testing 1: " + (component_name in componentExcept)
+                   echo "Testing 2: " + !(component_name in componentOnly)
+                   echo "Testing 3: " + (componentOnly.empty)
                   if (component_name in componentExcept ||
-                      (component_name in componentOnly && componentOnly.empty) ) {
+                      !(component_name in componentOnly && componentOnly.empty) ) {
                      echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                      currentBuild.result = Result.SUCCESS
                      currentBuild.completeBuild = false
