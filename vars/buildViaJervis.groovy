@@ -154,7 +154,6 @@ String printDecryptedProperties(lifecycleGenerator generator, String credentials
     ].join('\n') as String
 }
 
-@NonCPS
 def call() {
    
     String github_org
@@ -201,11 +200,14 @@ def call() {
     echo "in proccess map=${jervis_yamls}"
     for(String component_name : jervis_yamls.keySet()) 
     {
+       echo "before component_name=${component_name}"
        if (
             (componentOnly.empty || componentOnly.contains(component_name))
              && 
             (componentExcept.empty || !componentExcept.contains(component_name)) 
           ) {
+               
+               echo "after component_name=${component_name}"
                jervis_tasks[component_name] = { 
                        node('jervis_generator'){
                           stage("Forking component pipeline for ${component_name}") {
