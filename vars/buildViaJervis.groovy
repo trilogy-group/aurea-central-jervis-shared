@@ -205,9 +205,6 @@ def call() {
              && 
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
-              stage("Forking component") {
-                  checkout global_scm
-              }
               jervis_tasks[component_name] = { 
                  stage("Forking component") {
                   buildViaJervis(jervis_yamls[component_name],folder_listing)
@@ -216,6 +213,7 @@ def call() {
               
             }
       }
+      parallel(jervis_tasks)
   }
 }
 
