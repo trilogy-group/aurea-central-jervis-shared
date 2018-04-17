@@ -338,35 +338,28 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                check_result = checkout global_scm
                echo "global_scm=${global_scm}"
                echo "check_result=${check_result}"
-               currentBuild.rawBuild.changeSets.each{
-                  changeSet -> echo "changeSet=${changeSet}"
-               }
                List componentOnly = []
                List componentExcept = []
-               currentBuild.changeSets.each{ 
-                  changeset -> changeset.each{ 
-                     change -> echo change.comment
-                     if(change.comment.contains('[ci ')) {
-                        def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
-                        for (ci_hint in ci_hint_list){
-                           echo "ci_hint=${ci_hint}"
-                           switch (ci_hint) {
-                                         case ~/^filter\.except.*$/:
-                                             componentExcept += ci_hint.split('=')[1].split(',')
-                              echo "componentExcept=${componentExcept}"
-                                             break
-                                         case ~/^filter\.only.*$/:
-                                             componentOnly += ci_hint.split('=')[1].split(',')
-                              echo "componentExcept=${componentOnly}"
-                                             break
-                                         default:
-                                             break
-                                         }   
-                                     }
+               if(currentBuild.changeSets.last().comment.contains('[ci ')) {
+                  def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
+                  for (ci_hint in ci_hint_list){
+                     echo "ci_hint=${ci_hint}"
+                     switch (ci_hint) {
+                                   case ~/^filter\.except.*$/:
+                                       componentExcept += ci_hint.split('=')[1].split(',')
+                        echo "componentExcept=${componentExcept}"
+                                       break
+                                   case ~/^filter\.only.*$/:
+                                       componentOnly += ci_hint.split('=')[1].split(',')
+                        echo "componentExcept=${componentOnly}"
+                                       break
+                                   default:
+                                       break
+                                   }   
                                }
-                        }
-                     }
-            }
+                         }
+                  }
+
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
                     environment_string = sh(script: 'env | LC_ALL=C sort', returnStdout: true).split('\n').join('\n    ')
