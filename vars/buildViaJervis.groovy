@@ -179,7 +179,7 @@ def call() {
        echo "before component_name=${component_name}"
        jervis_tasks[component_name] = { 
               node('jervis_generator'){
-                 stage("Forking component pipeline for ${component_name}") {
+                 stage("Forking pipeline for component \'${component_name}\'") {
                      buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
                   }
               }
@@ -279,9 +279,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                               change -> echo change.comment
                               if(change.comment.contains('[ci ')) {
                                  def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-                                 echo "ci_hint_list=${ci_hint_list}"
                                  for (ci_hint in ci_hint_list){
-                                    echo "ci_hint_list=${ci_hint_list}"  
                                     switch (ci_hint) {
                                                   case ~/^filter\.except.*$/:
                                                       componentExcept += ci_hint.split('=')[1].split(',')
@@ -296,11 +294,8 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                                                   }   
                                               }
                                         }
-                              echo "change.comment=${change.comment}"
                                  }
                               }
-                  echo "processing componentOnly=${componentOnly}"
-                  echo "processing componentExcept=${componentExcept}"
                     }
                     stage("Build axis ${stageIdentifier}") {
                         Boolean failed_stage = false
@@ -353,28 +348,21 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                               change -> echo change.comment
                               if(change.comment.contains('[ci ')) {
                                  def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-                                 echo "ci_hint_list=${ci_hint_list}"
                                  for (ci_hint in ci_hint_list){
-                                    echo "ci_hint_list=${ci_hint_list}"  
                                     switch (ci_hint) {
                                                   case ~/^filter\.except.*$/:
                                                       componentExcept += ci_hint.split('=')[1].split(',')
-                                       echo "processing ${ci_hit}"
                                                       break
                                                   case ~/^filter\.only.*$/:
                                                       componentOnly += ci_hint.split('=')[1].split(',')
-                                       echo "processing ${ci_hit}"
                                                       break
                                                   default:
                                                       break
                                                   }   
                                               }
                                         }
-                              echo "change.comment=${change.comment}"
                                  }
                               }
-                  echo "processing componentOnly=${componentOnly}"
-                  echo "processing componentExcept=${componentExcept}"
             }
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
