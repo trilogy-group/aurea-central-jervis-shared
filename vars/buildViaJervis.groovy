@@ -388,7 +388,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                      currentBuild.completeBuild = false
                      return
                   }
-
+            }
 
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
