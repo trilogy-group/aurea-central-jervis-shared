@@ -340,7 +340,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                checkout global_scm
                testfoo = checkout global_scm
                testbar = checkout scm
-               echo scm.properties
                echo testfoo.dump()
                echo testbar.dump()
           
