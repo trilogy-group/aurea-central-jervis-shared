@@ -381,12 +381,12 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
+              if(shouldSkipBuildDeploy(component_name)){
+                 currentBuild.result = 'SUCCESS'
+                 exit 0
+              }
             }
 
-           if(shouldSkipBuildDeploy(component_name)){
-              currentBuild.result = 'SUCCESS'
-              exit 0
-           }
            
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
