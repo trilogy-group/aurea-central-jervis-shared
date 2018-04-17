@@ -182,6 +182,7 @@ def call() {
         change -> 
         if(change.comment.contains('[ci ')) {
             def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+            echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
             hint_loop:
             for (ci_hint in ci_hint_list){
                 switch (ci_hint) {
@@ -202,7 +203,9 @@ def call() {
                     }
                 }
             }
-         
+         echo "componentExcept=${componentExcept}"
+         echo "componentOnly=${componentOnly}"
+         echo "componentExcept${component_name}"
         jervis_yamls.keySet().each{
             component_name -> 
                 if (component_name in componentExcept ||
