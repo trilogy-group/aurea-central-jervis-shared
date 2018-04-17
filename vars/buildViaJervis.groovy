@@ -338,7 +338,8 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-               echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>" + currentBuild.changeSets.last().dump()
+               
+               echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>" + currentBuild.changeSets.last().getItems().dump()
                if(currentBuild.changeSets.last().getItems().last().comment.contains('[ci ')) {
                   def ci_hint_list = currentBuild.changeSets.getItems().last().comment.split('[ci ')[1].split(']')[0].split(' ')
                   for (ci_hint in ci_hint_list){
