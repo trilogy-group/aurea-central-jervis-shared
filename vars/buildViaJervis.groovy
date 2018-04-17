@@ -344,7 +344,9 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
         if(!generator.isMatrixBuild()) {
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
-                checkout global_scm
+                check_result = checkout global_scm
+               echo "global_scm=${global_scm}"
+               echo "check_result=${check_result}"
                List componentOnly = []
                         List componentExcept = []
                         currentBuild.changeSets.each{ 
