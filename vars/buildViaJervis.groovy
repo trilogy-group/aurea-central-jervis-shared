@@ -207,7 +207,9 @@ def call() {
           ) {
               jervis_tasks[component_name] = { 
                  node('jervis_generator'){
-                buildViaJervis(jervis_yamls[component_name],folder_listing)
+                    stage('Forking for component ${component_name}') {
+                        buildViaJervis(jervis_yamls[component_name],folder_listing)
+                    }
                  }
             }
       }
