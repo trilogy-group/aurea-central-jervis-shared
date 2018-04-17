@@ -212,7 +212,11 @@ def call() {
     BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
     boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
     env.IS_PR_BUILD = "${is_pull_request}" as String
-    
+    currentBuild.rawBuild.parent.parent.sources[0].source.with {
+        github_org = it.repoOwner
+        github_repo = it.repository
+        github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
+    }
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
