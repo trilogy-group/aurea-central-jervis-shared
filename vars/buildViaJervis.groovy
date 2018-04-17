@@ -173,7 +173,8 @@ def call() {
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
-   
+    List componentOnly = []
+    List componentExcept = []
     Map jervis_tasks = [failFast: true]
     echo "Scanning change log for ci hints"
     currentBuild.changeSets.each{ 
@@ -373,33 +374,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-               echo "Scanning change log for ci hints"
-               currentBuild.changeSets.each{ 
-                  changeset -> changeset.each{ 
-                     change -> 
-                     if(change.comment.contains('[ci ')) {
-                        def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-                        hint_loop:
-                        for (ci_hint in ci_hint_list){
-                           switch (ci_hint) {
-                                         case ~/^filter\.except.*$/:
-                                             componentExcept += ci_hint.split('=')[1].split(',')
-                                             break
-                                         case ~/^filter\.only.*$/:
-                                             componentOnly += ci_hint.split('=')[1].split(',')
-                                             break
-                                         case ~/^filter\.reset.*$/:
-                                             componentOnly.clear()
-                                             componentExcept.clear()
-                                             break hint_loop
-                                         default:
-                                             break
-                                         }   
-                                     }
-                               }
-                        }
-                     }
-
             }
 
             stage("Build Project") {
