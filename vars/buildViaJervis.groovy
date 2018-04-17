@@ -318,8 +318,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                 node(label) {
                     stage("Checkout SCM") {
                         checkout global_scm
-                        List componentOnly = []
-                        List componentExcept = []
                         currentBuild.changeSets.each{ 
                            changeset -> changeset.each{ 
                               change -> 
