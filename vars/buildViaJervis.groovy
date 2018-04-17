@@ -366,7 +366,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                         }
                      }
                
-                   echo "Testing ${component_name} against hint only=" + componentOnly.dump() + " and except="+componentExcept.dump()
+                   echo "Testing ${component_name} against hint only=" + componentOnly + " and except="+componentExcept
                    echo "Testing 1: " + (component_name in componentExcept)
                    echo "Testing 2: " + !(component_name in componentOnly)
                    echo "Testing 3: " + (componentOnly.empty)
