@@ -343,7 +343,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                      doGenerateSubmoduleConfigurations: true,
                      extensions: global_scm.extensions,
                      userRemoteConfigs: global_scm.userRemoteConfigs,
-                     depth: 1,
                      recursiveSubmodules: true
                 ])
                echo global_scm.dump()
