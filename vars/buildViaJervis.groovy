@@ -176,8 +176,9 @@ def call() {
          change -> echo change.comment
          if(change.comment.contains('[ci ')) {
             def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-            ci_hint_list.each{
-               ci_hint -> echo "ci_hint_list=${ci_hint_list}"  
+            echo "ci_hint_list=${ci_hint_list}"
+            for (ci_hint in ci_hint_list){
+               echo "ci_hint_list=${ci_hint_list}"  
                switch (ci_hint) {
                              case ~/^filter\.except.*$/:
                                  componentExcept += ci_hint.split('=')[1].split(',')
@@ -192,12 +193,13 @@ def call() {
                              }   
                          }
                    }
+         echo "change.comment=${change.comment}"
             }
          }
        
    
-                  echo "processing ${componentOnly}"
-                  echo "processing ${componentExcept}"
+                  echo "processing componentOnly=${componentOnly}"
+                  echo "processing componentExcept=${componentExcept}"
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
