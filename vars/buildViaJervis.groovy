@@ -27,6 +27,7 @@ import hudson.console.HyperlinkNote
 import hudson.util.Secret
 import jenkins.bouncycastle.api.PEMEncodable
 import jenkins.model.Jenkins
+import org.yaml.snakeyaml.Yaml
 import static jenkins.bouncycastle.api.PEMEncodable.decode
 
 
@@ -68,7 +69,19 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
     else {
         throw new FileNotFoundException('Cannot find .jervis.yml nor .travis.yml')
     }
-    [jervis_yaml, folder_listing]
+   def jervis_dict = new Yaml().load(jervis_yaml)
+   echo "${jervis_dict.keySet()}"
+   Map jervis_yamls_map = [ 'main': jervis_yaml]
+   if('jervis' in jervis_dict.keySet()){
+      jervis_yamls_map
+      for(String component_name : jervis_dict['jervis'].keySet()) {
+         echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
+         jervis_yamls_map[component_name] = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
+      }
+         echo "map=${jervis_yamls_map}"
+         echo "mapkeys=${jervis_yamls_map.keySet()}"
+   }
+    [jervis_yaml, folder_listing, jervis_yamls_map]
 }
 
 
@@ -141,11 +154,72 @@ String printDecryptedProperties(lifecycleGenerator generator, String credentials
     ].join('\n') as String
 }
 
-
-/**
+def call() {
+   
+    String github_org
+    String github_repo
+    String github_domain
+    List folder_listing = []
+    Map jervis_yamls = [:]
+    BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
+    boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
+    env.IS_PR_BUILD = "${is_pull_request}" as String
+    currentBuild.rawBuild.parent.parent.sources[0].source.with {
+        github_org = it.repoOwner
+        github_repo = it.repository
+        github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
+    }
+    List componentOnly = []
+    List componentExcept = []
+   currentBuild.changeSets.each{ 
+      changeset -> changeset.each{ 
+         change -> echo change.comment
+         if(change.comment.contains('[ci ')) {
+            def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+            ci_hint_list.each{
+               ci_hint ->   switch (ci_hint) {
+                             case ~/^filter\.except.*$/:
+                                 componentExcept += ci_hint.split('=')[1].split(',')
+                                 break
+                             case ~/^filter\.only.*$/:
+                                 componentOnly += ci_hint.split('=')[1].split(',')
+                                 break
+                             default:
+                                 break
+                             }   
+                         }
+                   }
+            }
+         }
+       
+   
+    List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
+    jervis_yamls = jervis_metadata[2]
+    folder_listing = jervis_metadata[1]
+    Map jervis_tasks = [failFast: true]
+    echo "in proccess map=${jervis_yamls}"
+    for(String component_name : jervis_yamls.keySet()) 
+    {
+       if (
+            (componentOnly.empty || componentOnly.contains(component_name))
+             && 
+            (componentExcept.empty || componentExcept.contains(component_name)) 
+          ) {
+              stage("Forking component") {
+                  checkout global_scm
+              }
+              jervis_tasks[component_name] = { 
+                 stage("Forking component") {
+                  buildViaJervis(jervis_yamls[component_name],folder_listing)
+              }
+             
+              
+            }
+     }
+}/**
   The main method of buildViaJervis()
  */
-def call() {
+def buildViaJervis(String jervis_yaml, List folder_listing) {
     def generator = new lifecycleGenerator()
     def pipeline_generator
     String environment_string
@@ -153,14 +227,12 @@ def call() {
     String github_org
     String github_repo
     String jenkins_folder
-    String jervis_yaml
     String lifecycles_json
     String os_stability
     String platforms_json
     String script_footer
     String script_header
     String toolchains_json
-    List folder_listing = []
     BRANCH_NAME = env.CHANGE_BRANCH?:env.BRANCH_NAME
     boolean is_pull_request = (env.CHANGE_ID?:false) as Boolean
     env.IS_PR_BUILD = "${is_pull_request}" as String
@@ -187,9 +259,6 @@ def call() {
     stage('Process Jervis YAML') {
         platforms_json = libraryResource 'platforms.json'
         generator.loadPlatformsString(platforms_json)
-        List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
-        jervis_yaml = jervis_metadata[0]
-        folder_listing = jervis_metadata[1]
         generator.preloadYamlString(jervis_yaml)
         os_stability = "${generator.label_os}-${generator.label_stability}"
         lifecycles_json = libraryResource "lifecycles-${os_stability}.json"
