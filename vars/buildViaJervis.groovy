@@ -180,9 +180,11 @@ def call() {
                ci_hint ->   switch (ci_hint) {
                              case ~/^filter\.except.*$/:
                                  componentExcept += ci_hint.split('=')[1].split(',')
+                  echo "processing ${ci_hit}"
                                  break
                              case ~/^filter\.only.*$/:
                                  componentOnly += ci_hint.split('=')[1].split(',')
+                  echo "processing ${ci_hit}"
                                  break
                              default:
                                  break
@@ -193,6 +195,8 @@ def call() {
          }
        
    
+                  echo "processing ${componentOnly}"
+                  echo "processing ${componentExcept}"
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
