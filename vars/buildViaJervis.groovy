@@ -336,7 +336,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                check_result = checkout global_scm
-               echo "global_scm=${global_scm.keySet()}"
+               echo "global_scm=${global_scm}"
                echo "check_result=${check_result}"
                echo "${currentBuild.rawBuild.changeSets}"
                List componentOnly = []
