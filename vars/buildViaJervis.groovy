@@ -70,18 +70,18 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
         throw new FileNotFoundException('Cannot find .jervis.yml nor .travis.yml')
     }
    def jervis_dict = new Yaml().load(jervis_yaml)
-   echo "${jervis_dict.keySet()}"
    Map jervis_yamls_map = [ 'main': jervis_yaml]
    if('jervis' in jervis_dict.keySet()){
-      jervis_yamls_map
+      echo "Child yaml map found"
       for(String component_name : jervis_dict['jervis'].keySet()) {
          echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
          jervis_yamls_map[component_name] = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
       }
-         echo "map=${jervis_yamls_map}"
-         echo "mapkeys=${jervis_yamls_map.keySet()}"
    }
-    [jervis_yaml, folder_listing, jervis_yamls_map]
+   else{
+      echo "No child yaml was found"
+   }
+    [folder_listing, jervis_yamls_map]
 }
 
 
@@ -171,10 +171,9 @@ def call() {
     }
     
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
-    jervis_yamls = jervis_metadata[2]
-    folder_listing = jervis_metadata[1]
+    jervis_yamls = jervis_metadata[1]
+    folder_listing = jervis_metadata[0]
     Map jervis_tasks = [failFast: true]
-    echo "in proccess map=${jervis_yamls}"
     for(String component_name : jervis_yamls.keySet()) 
     {
        echo "before component_name=${component_name}"
