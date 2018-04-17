@@ -174,54 +174,51 @@ def call() {
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
    
+    Map jervis_tasks = [failFast: true]
     echo "Scanning change log for ci hints"
-      currentBuild.changeSets.each{ 
-         changeset -> changeset.each{ 
-            change -> 
-            if(change.comment.contains('[ci ')) {
-               def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-               hint_loop:
-               for (ci_hint in ci_hint_list){
-                  switch (ci_hint) {
-                                case ~/^filter\.except.*$/:
-                                    componentExcept += ci_hint.split('=')[1].split(',')
-                                    break
-                                case ~/^filter\.only.*$/:
-                                    componentOnly += ci_hint.split('=')[1].split(',')
-                                    break
-                                case ~/^filter\.reset.*$/:
-                                    componentOnly.clear()
-                                    componentExcept.clear()
-                                    break hint_loop
-                                default:
-                                    break
-                                }   
-                            }
-                      }
-               }
-            }
-   
-            echo component_name
-            echo componentOnly.dump()
-            echo componentExcept.dump()
-            Map jervis_tasks = [failFast: true]
-         if (component_name in componentExcept ||
-             !(component_name in componentOnly && componentOnly.empty) ) {
-            echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
-         }
-         else{
-            echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
-            jervis_yamls.keySet().each{
-             component_name -> jervis_tasks[component_name] = { 
-                        node('jervis_generator'){
-                           stage("Forking pipeline for component") {
-                              buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+    currentBuild.changeSets.each{ 
+        changeset -> changeset.each{ 
+        change -> 
+        if(change.comment.contains('[ci ')) {
+            def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+            hint_loop:
+            for (ci_hint in ci_hint_list){
+                switch (ci_hint) {
+                            case ~/^filter\.except.*$/:
+                                componentExcept += ci_hint.split('=')[1].split(',')
+                                break
+                            case ~/^filter\.only.*$/:
+                                componentOnly += ci_hint.split('=')[1].split(',')
+                                break
+                            case ~/^filter\.reset.*$/:
+                                componentOnly.clear()
+                                componentExcept.clear()
+                                break hint_loop
+                            default:
+                                break
+                            }   
                         }
                     }
-               }
-         }
-          
-    }
+                }
+            }
+         
+        jervis_yamls.keySet().each{
+            component_name -> 
+                if (component_name in componentExcept ||
+                    !(component_name in componentOnly && componentOnly.empty) ) {
+                        echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
+                }
+                else{
+                    echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
+                    jervis_tasks[component_name] = { 
+                                node('jervis_generator'){
+                                stage("Forking pipeline for component") {
+                                    buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+                                 }
+                               }
+                    }
+            }
+        }
       parallel(jervis_tasks)
 }
 
