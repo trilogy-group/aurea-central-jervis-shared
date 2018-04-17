@@ -204,24 +204,27 @@ def call() {
                     }
                 }
             }
-         echo "componentExcept=${componentExcept}"
-         echo "componentOnly=${componentOnly}"
-        jervis_yamls.keySet().each{
-            component_name -> 
-                if (component_name in componentExcept ||
-                    (componentOnly && !component_name in componentOnly) ) {
-                        echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
-                }
-                else{
-                    echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
-                    jervis_tasks[component_name] = { 
-                                node('jervis_generator'){
-                                stage("Forking pipeline for component") {
-                                    buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
-                                 }
-                               }
-                    }
-            }
+
+           jervis_yamls.keySet().each{
+               component_name -> 
+                  echo "component_name=${component_name}"         
+                  echo "componentExcept=${componentExcept}"
+                  echo "componentOnly=${componentOnly}"
+              
+                   if (component_name in componentExcept ||
+                       (componentOnly && !component_name in componentOnly) ) {
+                           echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
+                   }
+                   else{
+                       echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
+                       jervis_tasks[component_name] = { 
+                                   node('jervis_generator'){
+                                   stage("Forking pipeline for component") {
+                                       buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+                                    }
+                                  }
+                       }
+               }
         }
       parallel(jervis_tasks)
 }
