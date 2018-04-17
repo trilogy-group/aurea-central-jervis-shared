@@ -184,7 +184,7 @@ def call() {
                   }
               }
          }
-             
+         echo component_name + ":" +jervis_tasks[component_name].dump()
       }
       parallel(jervis_tasks)
 }
