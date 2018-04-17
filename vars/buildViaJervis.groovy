@@ -206,9 +206,12 @@ def call() {
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
               jervis_tasks[component_name] = { 
-                 node('jervis_generator'){
+                 
+              return {
+                    node('jervis_generator'){
                         buildViaJervis(jervis_yamls[component_name],folder_listing)
                  }
+                }
             }
       }
       parallel(jervis_tasks)
