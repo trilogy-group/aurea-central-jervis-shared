@@ -338,7 +338,9 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                check_result = checkout global_scm
                echo "global_scm=${global_scm}"
                echo "check_result=${check_result}"
-               echo "changeSets=${currentBuild.rawBuild.changeSets}"
+               currentBuild.rawBuild.changeSets.each{
+                  changeSet -> echo "changeSet=${changeSet}"
+               }
                List componentOnly = []
                List componentExcept = []
                currentBuild.changeSets.each{ 
