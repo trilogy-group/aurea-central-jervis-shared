@@ -205,14 +205,15 @@ def call() {
              && 
             (componentExcept.empty || !componentExcept.contains(component_name)) 
           ) {
-              jervis_tasks[component_name] = return{
+               jervis_tasks[component_name] = { 
+                  return {
                        node('jervis_generator'){
                           stage("Forking component pipeline for ${component_name}") {
                               buildViaJervis(jervis_yamls[component_name],folder_listing)
                            }
-                          }
                        }
-               
+                  }
+               }
              }
       }
       parallel(jervis_tasks)
