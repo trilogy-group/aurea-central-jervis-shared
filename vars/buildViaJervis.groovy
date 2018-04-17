@@ -169,37 +169,7 @@ def call() {
         github_repo = it.repository
         github_domain = (it.apiUri)? it.apiUri.split('/')[2] : 'github.com'
     }
-    List componentOnly = []
-    List componentExcept = []
-   currentBuild.changeSets.each{ 
-      changeset -> changeset.each{ 
-         change -> echo change.comment
-         if(change.comment.contains('[ci ')) {
-            def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-            echo "ci_hint_list=${ci_hint_list}"
-            for (ci_hint in ci_hint_list){
-               echo "ci_hint_list=${ci_hint_list}"  
-               switch (ci_hint) {
-                             case ~/^filter\.except.*$/:
-                                 componentExcept += ci_hint.split('=')[1].split(',')
-                  echo "processing ${ci_hit}"
-                                 break
-                             case ~/^filter\.only.*$/:
-                                 componentOnly += ci_hint.split('=')[1].split(',')
-                  echo "processing ${ci_hit}"
-                                 break
-                             default:
-                                 break
-                             }   
-                         }
-                   }
-         echo "change.comment=${change.comment}"
-            }
-         }
-       
-   
-                  echo "processing componentOnly=${componentOnly}"
-                  echo "processing componentExcept=${componentExcept}"
+    
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[2]
     folder_listing = jervis_metadata[1]
@@ -208,21 +178,14 @@ def call() {
     for(String component_name : jervis_yamls.keySet()) 
     {
        echo "before component_name=${component_name}"
-       if (
-            (componentOnly.empty || componentOnly.contains(component_name))
-             && 
-            (componentExcept.empty || !componentExcept.contains(component_name)) 
-          ) {
-               
-               echo "after component_name=${component_name}"
-               jervis_tasks[component_name] = { 
-                       node('jervis_generator'){
-                          stage("Forking component pipeline for ${component_name}") {
-                              buildViaJervis(jervis_yamls[component_name],folder_listing)
-                           }
-                       }
-               }
-             }
+       jervis_tasks[component_name] = { 
+              node('jervis_generator'){
+                 stage("Forking component pipeline for ${component_name}") {
+                     buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+                  }
+              }
+         }
+             
       }
       parallel(jervis_tasks)
 }
@@ -230,7 +193,7 @@ def call() {
 /**
   The main method of buildViaJervis()
  */
-def buildViaJervis(String jervis_yaml, List folder_listing) {
+def buildViaJervis(String jervis_yaml, List folder_listing, String component_name) {
     def generator = new lifecycleGenerator()
     def pipeline_generator
     String environment_string
@@ -310,6 +273,35 @@ def buildViaJervis(String jervis_yaml, List folder_listing) {
                 node(label) {
                     stage("Checkout SCM") {
                         checkout global_scm
+                        List componentOnly = []
+                        List componentExcept = []
+                        currentBuild.changeSets.each{ 
+                           changeset -> changeset.each{ 
+                              change -> echo change.comment
+                              if(change.comment.contains('[ci ')) {
+                                 def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+                                 echo "ci_hint_list=${ci_hint_list}"
+                                 for (ci_hint in ci_hint_list){
+                                    echo "ci_hint_list=${ci_hint_list}"  
+                                    switch (ci_hint) {
+                                                  case ~/^filter\.except.*$/:
+                                                      componentExcept += ci_hint.split('=')[1].split(',')
+                                       echo "processing ${ci_hit}"
+                                                      break
+                                                  case ~/^filter\.only.*$/:
+                                                      componentOnly += ci_hint.split('=')[1].split(',')
+                                       echo "processing ${ci_hit}"
+                                                      break
+                                                  default:
+                                                      break
+                                                  }   
+                                              }
+                                        }
+                              echo "change.comment=${change.comment}"
+                                 }
+                              }
+                  echo "processing componentOnly=${componentOnly}"
+                  echo "processing componentExcept=${componentExcept}"
                     }
                     stage("Build axis ${stageIdentifier}") {
                         Boolean failed_stage = false
