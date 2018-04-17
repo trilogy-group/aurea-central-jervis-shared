@@ -178,7 +178,7 @@ def call() {
     {
        jervis_tasks[component_name] = { 
               node('jervis_generator'){
-                 stage("Forking pipeline for component \'${component_name}\'") {
+                 stage("Forking pipeline for component") {
                      buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
                   }
               }
@@ -335,9 +335,8 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
         if(!generator.isMatrixBuild()) {
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
-               check_result = checkout global_scm
-               echo "global_scm=${global_scm}"
-               echo "check_result=${check_result}"
+               checkout global_scm
+               echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>=${currentBuild.changeSets.last()}"
                List componentOnly = []
                List componentExcept = []
                if(currentBuild.changeSets.last().contains('[ci ')) {
@@ -351,7 +350,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                                        break
                                    case ~/^filter\.only.*$/:
                                        componentOnly += ci_hint.split('=')[1].split(',')
-                        echo "componentExcept=${componentOnly}"
+                        echo "componentOnly=${componentOnly}"
                                        break
                                    default:
                                        break
