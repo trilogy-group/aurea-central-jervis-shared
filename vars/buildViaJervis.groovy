@@ -205,11 +205,10 @@ def call() {
             }
          echo "componentExcept=${componentExcept}"
          echo "componentOnly=${componentOnly}"
-         echo "componentExcept${component_name}"
         jervis_yamls.keySet().each{
             component_name -> 
                 if (component_name in componentExcept ||
-                    !(component_name in componentOnly && componentOnly.empty) ) {
+                    (componentOnly && !component_name in componentOnly) ) {
                         echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                 }
                 else{
