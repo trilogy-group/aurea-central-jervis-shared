@@ -178,7 +178,7 @@ def call() {
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
     Map jervis_tasks = [failFast: true]
-    echo "Scanning change log for ci hints"   
+    
     jervis_yamls.keySet().each{
        component_name -> 
           jervis_tasks[component_name] = { 
