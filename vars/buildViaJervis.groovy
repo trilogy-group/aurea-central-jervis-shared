@@ -215,8 +215,11 @@ def call() {
              
               
             }
-     }
-}/**
+      }
+  }
+}
+
+/**
   The main method of buildViaJervis()
  */
 def buildViaJervis(String jervis_yaml, List folder_listing) {
