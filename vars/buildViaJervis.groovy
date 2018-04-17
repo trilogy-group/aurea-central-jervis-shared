@@ -338,8 +338,11 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-               echo (checkout global_scm).dump()
-               echo (checkout scm).dump()
+               testfoo = checkout global_scm
+               testbar = checkout scm
+               echo testfoo.dump()
+               echo testbar.dump()
+          
                 List componentOnly = []
                 List componentExcept = []
                echo "currentBuild=" + currentBuild.dump()
