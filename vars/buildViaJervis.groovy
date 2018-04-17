@@ -212,8 +212,7 @@ def call() {
                    // that explicitly, or use { -> } syntax.
                    return 
                    {
-                       node('jervis_generator')
-                       {
+                       node('jervis_generator'){
                            buildViaJervis(jervis_yamls[component_name],folder_listing)
                        }
                    }
