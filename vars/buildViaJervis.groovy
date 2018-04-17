@@ -347,20 +347,26 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                         def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
                         echo ci_hint_list.dump()
                         for (ci_hint in ci_hint_list){
+                           echo "Testing ${ci_hint} hint"
                            switch (ci_hint) {
                                          case ~/^filter\.except.*$/:
                                              componentExcept += ci_hint.split('=')[1].split(',')
+                                            echo "${ci_hint} hit added<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                                              break
                                          case ~/^filter\.only.*$/:
                                              componentOnly += ci_hint.split('=')[1].split(',')
+                                            echo "${ci_hint} hit added<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                                              break
                                          default:
+                                            echo "${ci_hint} no hint addedd"
                                              break
                                          }   
                                      }
                                }
                         }
                      }
+               
+                   echo "Testing ${component_name} against hint only=${componentOnly.dump()} and except${componentExcept.dump()}"
                   if (component_name in componentExcept ||
                       (component_name in componentOnly && componentOnly.empty) ) {
                      echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
