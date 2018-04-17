@@ -176,7 +176,6 @@ def call() {
     Map jervis_tasks = [failFast: true]
     for(String component_name : jervis_yamls.keySet()) 
     {
-       echo "before component_name=${component_name}"
        jervis_tasks[component_name] = { 
               node('jervis_generator'){
                  stage("Forking pipeline for component \'${component_name}\'") {
@@ -283,11 +282,9 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                                     switch (ci_hint) {
                                                   case ~/^filter\.except.*$/:
                                                       componentExcept += ci_hint.split('=')[1].split(',')
-                                       echo "processing ${ci_hit}"
                                                       break
                                                   case ~/^filter\.only.*$/:
                                                       componentOnly += ci_hint.split('=')[1].split(',')
-                                       echo "processing ${ci_hit}"
                                                       break
                                                   default:
                                                       break
@@ -342,27 +339,30 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                echo "global_scm=${global_scm}"
                echo "check_result=${check_result}"
                List componentOnly = []
-                        List componentExcept = []
-                        currentBuild.changeSets.each{ 
-                           changeset -> changeset.each{ 
-                              change -> echo change.comment
-                              if(change.comment.contains('[ci ')) {
-                                 def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-                                 for (ci_hint in ci_hint_list){
-                                    switch (ci_hint) {
-                                                  case ~/^filter\.except.*$/:
-                                                      componentExcept += ci_hint.split('=')[1].split(',')
-                                                      break
-                                                  case ~/^filter\.only.*$/:
-                                                      componentOnly += ci_hint.split('=')[1].split(',')
-                                                      break
-                                                  default:
-                                                      break
-                                                  }   
-                                              }
-                                        }
-                                 }
-                              }
+               List componentExcept = []
+               currentBuild.changeSets.each{ 
+                  changeset -> changeset.each{ 
+                     change -> echo change.comment
+                     if(change.comment.contains('[ci ')) {
+                        def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
+                        for (ci_hint in ci_hint_list){
+                           echo "ci_hint=${ci_hint}"
+                           switch (ci_hint) {
+                                         case ~/^filter\.except.*$/:
+                                             componentExcept += ci_hint.split('=')[1].split(',')
+                              echo "componentExcept=${componentExcept}"
+                                             break
+                                         case ~/^filter\.only.*$/:
+                                             componentOnly += ci_hint.split('=')[1].split(',')
+                              echo "componentExcept=${componentOnly}"
+                                             break
+                                         default:
+                                             break
+                                         }   
+                                     }
+                               }
+                        }
+                     }
             }
             stage("Build Project") {
                 withEnvSecretWrapper(pipeline_generator, jervisEnvList) {
