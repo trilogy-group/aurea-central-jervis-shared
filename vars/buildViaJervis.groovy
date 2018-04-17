@@ -180,6 +180,8 @@ def call() {
     currentBuild.changeSets.each{ 
         changeset -> changeset.each{ 
         change -> 
+           echo "change.comment=${change.comment}"
+           echo change.dump()
         if(change.comment.contains('[ci ')) {
             def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
             echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
