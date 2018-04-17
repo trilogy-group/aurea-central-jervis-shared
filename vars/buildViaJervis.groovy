@@ -261,7 +261,9 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                     }
                 }
             }
-
+   echo "component_name=${component_name}"
+   echo "componentExcept=${componentExcept}"
+   echo "componentOnly=${componentOnly}"
     if (component_name in componentExcept ||
           (componentOnly && !(component_name in componentOnly)) ) {
             echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
