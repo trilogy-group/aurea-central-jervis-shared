@@ -119,50 +119,7 @@ String getFolderRSAKeyCredentials(String folder, String credentials_id) {
 
 def shouldSkipBuildDeploy(String component_name ) {
    checkout scm
-       List componentOnly = []
-    List componentExcept = []
-   echo "currentBuild=" + currentBuild.dump()
-    currentBuild.changeSets.each{ 
-        changeset -> changeset.each{ 
-        change -> 
-           echo "change.comment=${change.comment}"
-           echo change.dump()
-        if(change.comment.contains('[ci ')) {
-            def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
-            echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
-           
-            hint_loop:
-            for (ci_hint in ci_hint_list){
-                switch (ci_hint) {
-                            case ~/^filter\.except.*$/:
-                                componentExcept += ci_hint.split('=')[1].split(',')
-                                break
-                            case ~/^filter\.only.*$/:
-                                componentOnly += ci_hint.split('=')[1].split(',')
-                                break
-                            case ~/^filter\.reset.*$/:
-                                componentOnly.clear()
-                                componentExcept.clear()
-                                break hint_loop
-                            default:
-                                break
-                            }   
-                        }
-                    }
-                }
-            }
-   echo "component_name=${component_name}"
-   echo "componentExcept=${componentExcept}"
-   echo "componentOnly=${componentOnly}"
-    if (component_name in componentExcept ||
-          (componentOnly && !(component_name in componentOnly)) ) {
-            echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
-            currentBuild.result = 'SUCCESS'
-            exit 0  
-     }
-     else{
-       echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
-     }
+      
    
 }
 
@@ -381,10 +338,51 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-              if(shouldSkipBuildDeploy(component_name)){
-                 currentBuild.result = 'SUCCESS'
-                 exit 0
-              }
+                List componentOnly = []
+                List componentExcept = []
+               echo "currentBuild=" + currentBuild.dump()
+                currentBuild.changeSets.each{ 
+                    changeset -> changeset.each{ 
+                    change -> 
+                       echo "change.comment=${change.comment}"
+                       echo change.dump()
+                    if(change.comment.contains('[ci ')) {
+                        def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
+                        echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
+
+                        hint_loop:
+                        for (ci_hint in ci_hint_list){
+                            switch (ci_hint) {
+                                        case ~/^filter\.except.*$/:
+                                            componentExcept += ci_hint.split('=')[1].split(',')
+                                            break
+                                        case ~/^filter\.only.*$/:
+                                            componentOnly += ci_hint.split('=')[1].split(',')
+                                            break
+                                        case ~/^filter\.reset.*$/:
+                                            componentOnly.clear()
+                                            componentExcept.clear()
+                                            break hint_loop
+                                        default:
+                                            break
+                                        }   
+                                    }
+                                }
+                            }
+                        }
+               echo "component_name=${component_name}"
+               echo "componentExcept=${componentExcept}"
+               echo "componentOnly=${componentOnly}"
+                if (component_name in componentExcept ||
+                      (componentOnly && !(component_name in componentOnly)) ) {
+                        echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
+                        currentBuild.result = 'SUCCESS'
+                        exit 0  
+                 }
+                 else{
+                   echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
+                 }
+
             }
 
            
