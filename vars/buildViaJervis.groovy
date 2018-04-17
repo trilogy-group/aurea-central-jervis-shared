@@ -203,7 +203,7 @@ def call() {
        if (
             (componentOnly.empty || componentOnly.contains(component_name))
              && 
-            (componentExcept.empty || componentExcept.contains(component_name)) 
+            (componentExcept.empty || !componentExcept.contains(component_name)) 
           ) {
               jervis_tasks[component_name] = {
                    // We need to wrap what we return in a Groovy closure, or else it's invoked
@@ -212,7 +212,9 @@ def call() {
                    // that explicitly, or use { -> } syntax.
                    return {
                        node('jervis_generator'){
-                           buildViaJervis(jervis_yamls[component_name],folder_listing)
+                           stage('Forking component pipeline') {
+                              buildViaJervis(jervis_yamls[component_name],folder_listing)
+                           }
                        }
                    }
                }
