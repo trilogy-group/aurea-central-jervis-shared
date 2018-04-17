@@ -173,60 +173,20 @@ def call() {
     List jervis_metadata = getJervisMetaData("${github_org}/${github_repo}".toString(), BRANCH_NAME)
     jervis_yamls = jervis_metadata[1]
     folder_listing = jervis_metadata[0]
-    List componentOnly = []
-    List componentExcept = []
     Map jervis_tasks = [failFast: true]
     echo "Scanning change log for ci hints"
-    currentBuild.changeSets.each{ 
-        changeset -> changeset.each{ 
-        change -> 
-           echo "change.comment=${change.comment}"
-           echo change.dump()
-        if(change.comment.contains('[ci ')) {
-            def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
-            echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
-           
-            hint_loop:
-            for (ci_hint in ci_hint_list){
-                switch (ci_hint) {
-                            case ~/^filter\.except.*$/:
-                                componentExcept += ci_hint.split('=')[1].split(',')
-                                break
-                            case ~/^filter\.only.*$/:
-                                componentOnly += ci_hint.split('=')[1].split(',')
-                                break
-                            case ~/^filter\.reset.*$/:
-                                componentOnly.clear()
-                                componentExcept.clear()
-                                break hint_loop
-                            default:
-                                break
-                            }   
-                        }
-                    }
-                }
-            }
-
+    checkout scm
+   
            jervis_yamls.keySet().each{
                component_name -> 
-                  echo "component_name=${component_name}"         
-                  echo "componentExcept=${componentExcept}"
-                  echo "componentOnly=${componentOnly}"
-              
-                   if (component_name in componentExcept ||
-                       (componentOnly && !(component_name in componentOnly)) ) {
-                           echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
-                   }
-                   else{
-                       echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
-                       jervis_tasks[component_name] = { 
-                                   node('jervis_generator'){
-                                   stage("Forking pipeline for component") {
-                                       buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
-                                    }
-                                  }
-                       }
-               }
+                     jervis_tasks[component_name] = { 
+                                         node('jervis_generator'){
+                                         stage("Forking pipeline for component") {
+                                             buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
+                                          }
+                                        }
+                             }
+                 
         }
       parallel(jervis_tasks)
 }
@@ -268,7 +228,50 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
         "JERVIS_BRANCH=${BRANCH_NAME}",
         "IS_PR_BUILD=${is_pull_request}"
     ]
+   
+    List componentOnly = []
+    List componentExcept = []
+   
+    currentBuild.changeSets.each{ 
+        changeset -> changeset.each{ 
+        change -> 
+           echo "change.comment=${change.comment}"
+           echo change.dump()
+        if(change.comment.contains('[ci ')) {
+            def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
+            echo "CI HINT FOUND >>>>>>>>>>>>>>>>>" + ci_hint_list.dump()
+           
+            hint_loop:
+            for (ci_hint in ci_hint_list){
+                switch (ci_hint) {
+                            case ~/^filter\.except.*$/:
+                                componentExcept += ci_hint.split('=')[1].split(',')
+                                break
+                            case ~/^filter\.only.*$/:
+                                componentOnly += ci_hint.split('=')[1].split(',')
+                                break
+                            case ~/^filter\.reset.*$/:
+                                componentOnly.clear()
+                                componentExcept.clear()
+                                break hint_loop
+                            default:
+                                break
+                            }   
+                        }
+                    }
+                }
+            }
 
+    if (component_name in componentExcept ||
+          (componentOnly && !(component_name in componentOnly)) ) {
+            echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
+            currentBuild.result = 'SUCCESS'
+            exit 0  
+     }
+     else{
+       echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
+     }
+   
     def global_scm = scm
     def skip_deploy = false
 
