@@ -76,7 +76,6 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
       for(String component_name : jervis_dict['jervis'].keySet()) {
          echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
          jervis_yamls_map[component_name] = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
-         echo "jervis-yaml-content for ${component_name}:" + jervis_yamls_map[component_name]
       }
    }
    else{
@@ -183,19 +182,7 @@ def call() {
                   }
               }
          }
-         echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + component_name + ":" +jervis_tasks[component_name].dump()
     }
-    /*for(String component_name : jervis_yamls.keySet()) 
-    {
-       jervis_tasks[component_name] = { 
-              node('jervis_generator'){
-                 stage("Forking pipeline for component") {
-                     buildViaJervis(jervis_yamls[component_name],folder_listing,component_name)
-                  }
-              }
-         }
-         echo component_name + ":" +jervis_tasks[component_name].dump()
-      }*/
       parallel(jervis_tasks)
 }
 
@@ -203,7 +190,6 @@ def call() {
   The main method of buildViaJervis()
  */
 def buildViaJervis(String jervis_yaml, List folder_listing, String component_name) {
-    echo "Sarting jervis for component ${component_name} with yaml=" + jervis_yaml
     def generator = new lifecycleGenerator()
     def pipeline_generator
     String environment_string
@@ -287,7 +273,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                         List componentExcept = []
                         currentBuild.changeSets.each{ 
                            changeset -> changeset.each{ 
-                              change -> echo change.comment
+                              change -> 
                               if(change.comment.contains('[ci ')) {
                                  def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
                                  for (ci_hint in ci_hint_list){
@@ -350,27 +336,26 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
                checkout global_scm
-               echo global_scm.dump()
-               echo "Scanning changelog for ci hints"
+               echo "Scanning change log for ci hints"
                currentBuild.changeSets.each{ 
                   changeset -> changeset.each{ 
-                     change -> echo change.dump()
+                     change -> 
                      if(change.comment.contains('[ci ')) {
                         def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
-                        echo ci_hint_list.dump()
+                        hint_loop:
                         for (ci_hint in ci_hint_list){
-                           echo "Testing ${ci_hint} hint"
                            switch (ci_hint) {
                                          case ~/^filter\.except.*$/:
                                              componentExcept += ci_hint.split('=')[1].split(',')
-                                            echo "${ci_hint} hit added<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                                              break
                                          case ~/^filter\.only.*$/:
                                              componentOnly += ci_hint.split('=')[1].split(',')
-                                            echo "${ci_hint} hit added<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                                              break
+                                         case ~/^filter\.reset.*$/:
+                                             componentOnly.clear()
+                                             componentExcept.clear()
+                                             break hint_loop
                                          default:
-                                            echo "${ci_hint} no hint addedd"
                                              break
                                          }   
                                      }
@@ -378,15 +363,10 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                         }
                      }
                
-                   echo "Testing ${component_name} against hint only=" + componentOnly + " and except="+componentExcept
-                   echo "Testing 1: " + (component_name in componentExcept)
-                   echo "Testing 2: " + !(component_name in componentOnly)
-                   echo "Testing 3: " + (componentOnly.empty)
                   if (component_name in componentExcept ||
                       !(component_name in componentOnly && componentOnly.empty) ) {
                      echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                      currentBuild.result = Result.SUCCESS
-                     echo currentBuild.dump()
                      return
                   }
                   else{
