@@ -206,7 +206,7 @@ def call() {
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
               jervis_tasks[component_name] = { 
-                 node('master'){
+                 node('jervis_generator'){
                      buildViaJervis(jervis_yamls[component_name],folder_listing)
                  }
             }
