@@ -339,11 +339,11 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             stage("Checkout SCM") {
                checkout([
                      $class: 'GitSCM',
-                     branches: [[name: "*/${env.BRANCH}"]], 
                      doGenerateSubmoduleConfigurations: true,
                      extensions: global_scm.extensions,
                      userRemoteConfigs: global_scm.userRemoteConfigs,
-                     recursiveSubmodules: true
+                     recursiveSubmodules: true,
+                     depth: 1
                 ])
                echo global_scm.dump()
                echo "Scanning changelog for ci hints"
