@@ -76,6 +76,7 @@ List getJervisMetaData(String project, String JERVIS_BRANCH) {
       for(String component_name : jervis_dict['jervis'].keySet()) {
          echo "New sub .jervis.yml found for component ${component_name} located at ${jervis_dict['jervis'][component_name]}"
          jervis_yamls_map[component_name] = git_service.getFile(project, jervis_dict['jervis'][component_name], JERVIS_BRANCH)
+         echo "jervis-yaml-content for ${component_name}:" + jervis_yamls_map[component_name]
       }
    }
    else{
