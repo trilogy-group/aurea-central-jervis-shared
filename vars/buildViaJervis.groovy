@@ -337,7 +337,15 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
         if(!generator.isMatrixBuild()) {
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
-               checkout global_scm
+               checkout([
+                     $class: 'GitSCM',
+                     branches: [[name: "*/${env.BRANCH}"]], 
+                     doGenerateSubmoduleConfigurations: true,
+                     extensions: global_scm.extensions,
+                     userRemoteConfigs: global_scm.userRemoteConfigs,
+                     depth: 1,
+                     recursiveSubmodules: true
+                ])
                echo global_scm.dump()
                echo "Scanning changelog for ci hints"
                currentBuild.changeSets.each{ 
