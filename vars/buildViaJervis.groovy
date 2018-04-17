@@ -228,10 +228,13 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
         "JERVIS_BRANCH=${BRANCH_NAME}",
         "IS_PR_BUILD=${is_pull_request}"
     ]
+      
+    def global_scm = scm
+    def skip_deploy = false
    
     List componentOnly = []
     List componentExcept = []
-   
+     checkout global_scm
     currentBuild.changeSets.each{ 
         changeset -> changeset.each{ 
         change -> 
@@ -271,9 +274,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
      else{
        echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
      }
-   
-    def global_scm = scm
-    def skip_deploy = false
+
 
     stage('Process Jervis YAML') {
         platforms_json = libraryResource 'platforms.json'
