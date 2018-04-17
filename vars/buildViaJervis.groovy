@@ -214,7 +214,7 @@ def call() {
                   echo "componentOnly=${componentOnly}"
               
                    if (component_name in componentExcept ||
-                       (componentOnly && !component_name in componentOnly) ) {
+                       (componentOnly && !(component_name in componentOnly)) ) {
                            echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                    }
                    else{
