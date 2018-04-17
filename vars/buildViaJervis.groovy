@@ -369,7 +369,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                       !(component_name in componentOnly && componentOnly.empty) ) {
                      echo "Component ${component_name} build and deploy SKIPPED due to git commit hint filter"
                      currentBuild.result = Result.SUCCESS
-                     break
+                     exit
                   }
                   else{
                      echo "Component ${component_name} not affected by ci hint filters. Proceeding build and deploy"
