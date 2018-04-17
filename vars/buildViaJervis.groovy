@@ -177,7 +177,8 @@ def call() {
          if(change.comment.contains('[ci ')) {
             def ci_hint_list = change.comment.contains.split('[ci ')[1].split(']')[0].split(' ')
             ci_hint_list.each{
-               ci_hint ->   switch (ci_hint) {
+               ci_hint -> echo "ci_hint_list=${ci_hint_list}"  
+               switch (ci_hint) {
                              case ~/^filter\.except.*$/:
                                  componentExcept += ci_hint.split('=')[1].split(',')
                   echo "processing ${ci_hit}"
