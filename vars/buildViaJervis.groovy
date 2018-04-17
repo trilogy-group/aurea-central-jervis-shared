@@ -205,13 +205,18 @@ def call() {
              && 
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
-              jervis_tasks[component_name] = { 
-                  node('jervis_generator'){
-              return {
-                   
-                        buildViaJervis(jervis_yamls[component_name],folder_listing)
-                 }
-                }
+              jervis_tasks[component_name] = {
+                   // We need to wrap what we return in a Groovy closure, or else it's invoked
+                   // when this method is called, not when we pass it to parallel.
+                   // To do this, you need to wrap the code below in { }, and either return
+                   // that explicitly, or use { -> } syntax.
+                   return {
+                       node('jervis_generator'){
+                           buildViaJervis(jervis_yamls[component_name],folder_listing)
+                       }
+                   }
+               }
+
             }
       }
       parallel(jervis_tasks)
