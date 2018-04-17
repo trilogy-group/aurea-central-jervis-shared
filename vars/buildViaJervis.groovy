@@ -340,6 +340,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                checkout global_scm
                testfoo = checkout global_scm
                testbar = checkout scm
+               println scm.properties.sort{it.key}.collect{it}.findAll{!['class', 'active'].contains(it.key)}.join('\n')
                echo testfoo.dump()
                echo testbar.dump()
           
