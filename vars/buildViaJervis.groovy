@@ -377,8 +377,6 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
     }
 
     node(generator.labels) {
-         List componentOnly = []
-         List componentExcept = []
         if(!generator.isMatrixBuild()) {
             Map stashMap = pipeline_generator.stashMap
             stage("Checkout SCM") {
