@@ -118,7 +118,7 @@ String getFolderRSAKeyCredentials(String folder, String credentials_id) {
 }
 
 def shouldSkipBuildDeploy(String component_name) {
-   
+   checkout global_scm
        List componentOnly = []
     List componentExcept = []
    echo "currentBuild=" + currentBuild.dump()
