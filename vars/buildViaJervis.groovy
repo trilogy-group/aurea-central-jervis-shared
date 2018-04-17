@@ -206,11 +206,12 @@ def call() {
             (componentExcept.empty || componentExcept.contains(component_name)) 
           ) {
               jervis_tasks[component_name] = { 
+                 node('jervis_generator'){
                  stage("Forking component") {
                   buildViaJervis(jervis_yamls[component_name],folder_listing)
               }
              
-              
+                 }
             }
       }
       parallel(jervis_tasks)
