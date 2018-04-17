@@ -339,8 +339,8 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
             stage("Checkout SCM") {
                checkout global_scm
                echo "LAST_COMMIT_LINE>>>>>>>>>>>>>>>=${currentBuild.changeSets.last().getItems().last().comment}"
-               if(currentBuild.changeSets.last().getItems().last().contains('[ci ')) {
-                  def ci_hint_list = currentBuild.changeSets.getItems().last().split('[ci ')[1].split(']')[0].split(' ')
+               if(currentBuild.changeSets.last().getItems().last().comment.contains('[ci ')) {
+                  def ci_hint_list = currentBuild.changeSets.getItems().last().comment.split('[ci ')[1].split(']')[0].split(' ')
                   for (ci_hint in ci_hint_list){
                      echo "ci_hint=${ci_hint}"
                      switch (ci_hint) {
