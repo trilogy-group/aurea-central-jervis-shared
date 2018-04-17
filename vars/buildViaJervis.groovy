@@ -340,7 +340,7 @@ def buildViaJervis(String jervis_yaml, List folder_listing, String component_nam
                echo "check_result=${check_result}"
                List componentOnly = []
                List componentExcept = []
-               if(currentBuild.changeSets.last().comment.contains('[ci ')) {
+               if(currentBuild.changeSets.last().contains('[ci ')) {
                   def ci_hint_list = change.comment.split('[ci ')[1].split(']')[0].split(' ')
                   for (ci_hint in ci_hint_list){
                      echo "ci_hint=${ci_hint}"
