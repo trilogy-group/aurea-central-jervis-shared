@@ -192,6 +192,7 @@ def call() {
   The main method of buildViaJervis()
  */
 def buildViaJervis(String jervis_yaml, List folder_listing, String component_name) {
+    echo "Sarting jervis for component ${component_name} with yaml=" + jervis_yaml
     def generator = new lifecycleGenerator()
     def pipeline_generator
     String environment_string
