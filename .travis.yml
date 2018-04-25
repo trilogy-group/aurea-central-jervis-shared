@@ -26,6 +26,7 @@ branches:
   only:
     - master
     - jervis_simple
+    - stable
 
 jenkins:
   pipeline_jenkinsfile: assets/Jenkinsfile
@@ -67,4 +68,3 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
-
